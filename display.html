@@ -1,22 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Display</title>
+  <title>Traitors – Display</title>
+  <link rel="stylesheet" href="style.css">
   <script src="game.js"></script>
-  <style>
-    body { background:black;color:white;font-size:48px;text-align:center;padding:50px }
-  </style>
 </head>
 <body>
-<div id="screen"></div>
+<img src="traitors.jpg" class="logo" id="logo">
+<h1 id="text"></h1>
+
 <script>
 function render() {
   const s = load();
-  if (!s) return;
-  document.getElementById("screen").innerText = s.message || "";
+  const logo = document.getElementById("logo");
+  const text = document.getElementById("text");
+
+  if (!s || !s.adminConfirmed || s.message === "") {
+    logo.style.display = "block";
+    text.innerText = "";
+    return;
+  }
+
+  if (s.paused) {
+    logo.style.display = "block";
+    text.innerText = "GAME PAUSED";
+    return;
+  }
+
+  logo.style.display = "none";
+  text.innerText = s.message;
 }
-window.onstorage = render;
-render();
+
+setInterval(render, 300);
 </script>
 </body>
 </html>
