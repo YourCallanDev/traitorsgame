@@ -217,13 +217,9 @@ function randomGame() {
     return;
   }
   if (r === 1) {
-    s.lastRoundType = 'MURDER';
-    save(s);
     startMurder();
   }
   if (r === 2) {
-    s.lastRoundType = 'BANISH';
-    save(s);
     startBanish();
   }
 }
