@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin</title>
+  <script src="game.js"></script>
+</head>
+<body>
+<h1>ADMIN PANEL</h1>
+
+<button onclick="forceGame()">FORCE GAME</button>
+<button onclick="forceFinal()">FINAL BANISHMENT</button>
+<button onclick="reset()">RESET GAME</button>
+
+<script>
+function forceGame() {
+  const s = getState();
+  s.phase = "GAME_MENU";
+  setState(s);
+}
+
+function forceFinal() {
+  startBanishment(true);
+}
+
+function reset() {
+  localStorage.removeItem("traitors_game_state");
+}
+</script>
+</body>
+</html>
