@@ -10,67 +10,116 @@
 <div class="panel" id="ui"></div>
 
 <script>
+let typing = false;
+
+/* =========================
+   RENDER
+========================= */
 function render() {
+  if (typing) return;
+
   const s = load();
   const ui = document.getElementById("ui");
   ui.innerHTML = "";
 
+  /* ---------- NO GAME ---------- */
   if (!s) {
     ui.innerHTML = `
-      <h2>Initialise Game</h2>
-      <input id="count" type="number" placeholder="Number of players">
+      <h2>Start New Game</h2>
+      <input id="count" type="number" min="3" placeholder="Number of players">
       <br><br>
       <label><input type="checkbox" id="disp" checked> Use Display</label>
       <br><br>
-      <button onclick="start()">START</button>`;
+      <button onclick="startGameInit()">START</button>
+    `;
     return;
   }
 
+  /* ---------- WAITING FOR ADMIN ---------- */
   if (!s.adminConfirmed) {
     ui.innerHTML = `<h2>Waiting for admin to confirm game start…</h2>`;
     return;
   }
 
-  if (s.phase === "SETUP") {
-    const p = s.players.find(x => !x.name);
-    if (!p) return;
-
-    ui.innerHTML = `
-      <h2>PLAYER ${p.id}</h2>
-      <input id="name" placeholder="Name">
-      <br>
-      <select id="role">
-        <option>FAITHFUL</option>
-        <option>TRAITOR</option>
-      </select>
-      <br><br>
-      <button onclick="savePlayer(${p.id})">CONFIRM</button>`;
-    return;
-  }
-
+  /* ---------- PAUSED ---------- */
   if (s.paused) {
     ui.innerHTML = `<h2>GAME PAUSED</h2>`;
     return;
   }
 
+  /* ---------- PLAYER SETUP ---------- */
+  if (s.phase === "SETUP") {
+    const p = s.players.find(pl => !pl.name);
+    if (!p) return;
+
+    ui.innerHTML = `
+      <h2>PLAYER ${p.id}</h2>
+      <input id="name" placeholder="Enter name">
+      <br>
+      <select id="role">
+        <option value="FAITHFUL">FAITHFUL</option>
+        <option value="TRAITOR">TRAITOR</option>
+      </select>
+      <br><br>
+      <button onclick="confirmPlayer(${p.id})">CONFIRM</button>
+    `;
+
+    document.getElementById("name").onfocus = () => typing = true;
+    document.getElementById("name").onblur = () => typing = false;
+    return;
+  }
+
+  /* ---------- MENU ---------- */
   if (s.phase === "MENU") {
     ui.innerHTML = `
       <h2>Choose Next Phase</h2>
       <button onclick="startGame()">GAME</button>
-      <button onclick="finalBanish()">FINAL BANISHMENT</button>`;
+      <button onclick="startFinalBanishment()">FINAL BANISHMENT</button>
+    `;
+    return;
+  }
+
+  /* ---------- MURDER INPUT ---------- */
+  if (s.phase === "MURDER") {
+    const me = s.players.find(p => p.id === s.currentPlayer);
+
+    if (!me || !me.alive || me.role !== "TRAITOR") {
+      nextMurderTurn();
+      return;
+    }
+
+    ui.innerHTML = `<h2>${me.name}, SELECT A PLAYER</h2>`;
+
+    s.players
+      .filter(p => p.alive && p.role === "FAITHFUL")
+      .forEach(p => {
+        const btn = document.createElement("button");
+        btn.textContent = p.name;
+        btn.onclick = () => selectMurder(p.id);
+        ui.appendChild(btn);
+      });
+
     return;
   }
 }
 
-function start() {
-  initGame(
-    Number(document.getElementById("count").value),
-    document.getElementById("disp").checked
-  );
+/* =========================
+   INIT
+========================= */
+function startGameInit() {
+  const count = Number(document.getElementById("count").value);
+  const useDisplay = document.getElementById("disp").checked;
+
+  if (!count || count < 3) return;
+
+  initGame(count, useDisplay);
   render();
 }
 
-function savePlayer(id) {
+/* =========================
+   PLAYER SETUP
+========================= */
+function confirmPlayer(id) {
   const s = load();
   const p = s.players.find(x => x.id === id);
 
@@ -84,7 +133,113 @@ function savePlayer(id) {
   }
 
   save(s);
+  typing = false;
   render();
+}
+
+/* =========================
+   GAME SELECTION
+========================= */
+function startGame() {
+  const s = load();
+  const roll = Math.floor(Math.random() * 3);
+
+  if (roll === 0) {
+    s.message = "SILENT NIGHT";
+    speak("Silent night. Nothing happens.");
+    save(s);
+
+    setTimeout(() => {
+      s.message = "CHOOSE THE NEXT PHASE";
+      save(s);
+    }, 3000);
+    return;
+  }
+
+  if (roll === 1) startMurder();
+  if (roll === 2) {
+    s.message = "BANISHMENT";
+    speak("You will now begin banishment.");
+    save(s);
+  }
+}
+
+/* =========================
+   MURDER LOGIC
+========================= */
+function startMurder() {
+  const s = load();
+  s.phase = "MURDER";
+  s.nightChoices = [];
+  s.message = "HEADS DOWN";
+  speak("Heads down.");
+
+  s.currentPlayer = nextAlivePlayer(null);
+  speak(`Player ${s.currentPlayer}, please come to the computer.`);
+  save(s);
+}
+
+function selectMurder(targetId) {
+  const s = load();
+  s.nightChoices.push(targetId);
+  save(s);
+  nextMurderTurn();
+}
+
+function nextMurderTurn() {
+  const s = load();
+  const next = nextAlivePlayer(s.currentPlayer);
+
+  if (!next) {
+    resolveMurder();
+    return;
+  }
+
+  s.currentPlayer = next;
+  save(s);
+  speak(`Player ${s.currentPlayer}, please come to the computer.`);
+}
+
+function resolveMurder() {
+  const s = load();
+
+  if (s.nightChoices.length > 0) {
+    const victimId = s.nightChoices[Math.floor(Math.random() * s.nightChoices.length)];
+    const victim = s.players.find(p => p.id === victimId);
+    victim.alive = false;
+
+    s.message = `PLAYERS, THE NIGHT IS OVER\n${victim.name} WAS MURDERED`;
+    speak(`Players, the night is over. ${victim.name} was murdered.`);
+  } else {
+    s.message = "PLAYERS, THE NIGHT IS OVER";
+    speak("Players, the night is over.");
+  }
+
+  s.phase = "MENU";
+  s.currentPlayer = null;
+  s.nightChoices = [];
+  save(s);
+  checkWin();
+}
+
+/* =========================
+   HELPERS
+========================= */
+function nextAlivePlayer(currentId) {
+  const s = load();
+  const alive = s.players.filter(p => p.alive);
+
+  if (!currentId) return alive[0]?.id || null;
+  const idx = alive.findIndex(p => p.id === currentId);
+  return alive[idx + 1]?.id || null;
+}
+
+function startFinalBanishment() {
+  const s = load();
+  s.phase = "FINAL_BANISHMENT";
+  s.message = "FINAL BANISHMENT";
+  speak("Final banishment will now begin.");
+  save(s);
 }
 
 window.addEventListener("storage", render);
