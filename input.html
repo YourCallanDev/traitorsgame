@@ -247,8 +247,7 @@ function nextMurder() {
 function resolveMurder() {
   const s = load();
   if (s.murderVotes.length > 0) {
-    const victimId =
-      s.murderVotes[Math.floor(Math.random() * s.murderVotes.length)];
+    const victimId = s.murderVotes[0];
     const v = s.players.find(p => p.id === victimId);
     v.alive = false;
     speak(`${v.name} has been murdered`);
@@ -263,7 +262,6 @@ function recruit() {
   const s = load();
   const alive = alivePlayers(s);
   alive[s.index].role = "TRAITOR";
-  speak("You have been recruited");
   save(s);
   render();
 }
