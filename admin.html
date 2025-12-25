@@ -22,7 +22,10 @@ function render() {
   a.innerHTML = "<h2>ADMIN PANEL</h2>";
 
   if (!s) {
-    a.innerHTML += "<p>No active game</p>";
+    a.innerHTML += `
+      <p>No active game</p>
+      <a href="index.html"><button>BACK TO HOME</button></a>
+    `;
     return;
   }
 
@@ -30,6 +33,7 @@ function render() {
     <button onclick="pause()">PAUSE</button>
     <button onclick="resume()">RESUME</button>
     <button onclick="reset()">RESET GAME</button>
+    <a href="index.html"><button>BACK TO HOME</button></a>
     <h3>PLAYERS</h3>
   `;
 
@@ -52,7 +56,11 @@ function resume() {
   save(s);
 }
 function reset() {
-  localStorage.removeItem("gameState");
+  if (confirm("Are you sure you want to reset the entire game? This cannot be undone.")) {
+    localStorage.removeItem("gameState");
+    render();
+    alert("Game has been reset!");
+  }
 }
 function kill(id) {
   const s = load();
