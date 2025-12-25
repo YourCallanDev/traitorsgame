@@ -1,16 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&display=swap');
+/* =========================
+   THE TRAITORS – CORE STYLE
+   SAFE • STABLE • BRANDED
+========================= */
 
 :root {
-  --bg-dark: #050505;
-  --bg-mid: #121212;
-  --accent-red: #7a0000;
-  --accent-red-bright: #a00000;
-  --text-main: #f2f2f2;
-  --text-muted: #9a9a9a;
+  --bg-main: #6b002b;        /* deep burgundy */
+  --bg-dark: #3b0018;
+  --gold: #f2a100;           /* logo gold */
+  --gold-dark: #c27d00;
+  --text-main: #ffffff;
+  --text-muted: #d0b0bb;
 }
 
 /* =========================
-   GLOBAL
+   GLOBAL RESET
 ========================= */
 * {
   box-sizing: border-box;
@@ -20,17 +23,13 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: radial-gradient(circle at top, #1a1a1a, var(--bg-dark));
+  background: var(--bg-main);
   color: var(--text-main);
-  font-family: 'Cinzel', serif;
-}
-
-body {
-  overflow: hidden;
+  font-family: Georgia, "Times New Roman", serif;
 }
 
 /* =========================
-   CONTAINERS
+   MAIN PANEL
 ========================= */
 .panel {
   min-height: 100vh;
@@ -40,97 +39,95 @@ body {
   align-items: center;
   text-align: center;
   padding: 40px;
-  animation: fadeIn 0.6s ease forwards;
-}
-
-.center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 /* =========================
    LOGO
 ========================= */
 .logo {
-  max-width: 320px;
+  max-width: 340px;
   margin-bottom: 30px;
-  animation: dissolve 1.2s ease forwards;
 }
 
 /* =========================
-   HEADINGS & TEXT
+   HEADINGS
 ========================= */
-h1, h2, h3 {
-  letter-spacing: 2px;
-  margin: 10px 0;
-}
-
 h1 {
-  font-size: 64px;
+  font-size: 60px;
+  letter-spacing: 4px;
+  margin: 20px 0;
 }
 
 h2 {
-  font-size: 40px;
+  font-size: 36px;
+  letter-spacing: 2px;
+  margin: 16px 0;
 }
 
 h3 {
-  font-size: 28px;
-}
-
-p {
-  font-size: 20px;
+  font-size: 26px;
+  margin: 10px 0;
 }
 
 /* =========================
-   INPUTS
+   TEXT
 ========================= */
-input, select {
-  padding: 14px 16px;
-  font-size: 18px;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-  margin: 10px;
-  background: #1e1e1e;
-  color: var(--text-main);
-  width: 280px;
-  text-align: center;
-  transition: background 0.3s ease;
+p {
+  font-size: 20px;
+  margin: 10px 0;
 }
 
+/* =========================
+   INPUTS (CRITICAL: STABLE)
+========================= */
+input, select {
+  font-size: 18px;
+  padding: 10px 14px;
+  margin: 8px;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+  background: #ffffff;
+  color: #000000;
+  width: 260px;
+  text-align: center;
+}
+
+/* DO NOT animate inputs */
 input:focus, select:focus {
-  background: #2a2a2a;
+  outline: 3px solid var(--gold);
 }
 
 /* =========================
    BUTTONS
 ========================= */
 button {
-  padding: 16px 34px;
-  margin: 12px;
-  font-size: 20px;
-  letter-spacing: 1px;
-  border-radius: 12px;
+  font-size: 18px;
+  padding: 12px 26px;
+  margin: 10px;
+  border-radius: 6px;
   border: none;
-  background: linear-gradient(145deg, var(--accent-red), #4a0000);
-  color: white;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background 0.3s ease,
-    box-shadow 0.3s ease;
-  box-shadow: 0 0 18px rgba(0,0,0,0.7);
+  background: var(--gold);
+  color: #000;
+  font-weight: bold;
 }
 
 button:hover {
-  background: linear-gradient(145deg, var(--accent-red-bright), #600000);
-  transform: scale(1.08);
-  box-shadow: 0 0 26px rgba(160,0,0,0.8);
+  background: var(--gold-dark);
 }
 
 button:active {
-  transform: scale(0.96);
+  transform: scale(0.98);
+}
+
+/* =========================
+   DISPLAY MESSAGE
+========================= */
+#message {
+  font-size: 52px;
+  line-height: 1.2;
+  margin: 30px;
 }
 
 /* =========================
@@ -140,77 +137,20 @@ button:active {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 14px;
-  margin-top: 40px;
+  gap: 12px;
+  margin-top: 30px;
 }
 
 .player {
-  padding: 12px 20px;
-  font-size: 22px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.12);
-  animation: zoomIn 0.5s ease;
+  background: rgba(255,255,255,0.15);
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 20px;
 }
 
 .player.dead {
-  opacity: 0.3;
+  opacity: 0.4;
   text-decoration: line-through;
-}
-
-/* =========================
-   MESSAGE DISPLAY
-========================= */
-#message {
-  font-size: 58px;
-  text-align: center;
-  line-height: 1.2;
-  margin: 30px;
-  animation: zoomIn 0.6s ease;
-}
-
-/* =========================
-   ANIMATIONS
-========================= */
-.fade {
-  animation: fadeIn 0.6s ease forwards;
-}
-
-.zoom {
-  animation: zoomIn 0.6s ease forwards;
-}
-
-.dissolve {
-  animation: dissolve 1s ease forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
-}
-
-@keyframes zoomIn {
-  from { transform: scale(0.85); opacity: 0 }
-  to { transform: scale(1); opacity: 1 }
-}
-
-@keyframes dissolve {
-  from { opacity: 0 }
-  to { opacity: 1 }
-}
-
-/* =========================
-   COUNTDOWN EMPHASIS
-========================= */
-.countdown {
-  font-size: 72px;
-  letter-spacing: 4px;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1 }
-  50% { opacity: 0.5 }
-  100% { opacity: 1 }
 }
 
 /* =========================
@@ -218,15 +158,13 @@ button:active {
 ========================= */
 .paused {
   opacity: 0.6;
-  filter: grayscale(100%);
 }
 
 /* =========================
    RESPONSIVE
 ========================= */
 @media (max-width: 768px) {
-  h1 { font-size: 42px }
-  h2 { font-size: 30px }
-  #message { font-size: 36px }
-  button { font-size: 18px }
+  h1 { font-size: 40px; }
+  h2 { font-size: 28px; }
+  #message { font-size: 34px; }
 }
