@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Player Input</title>
+  <title>Traitors – Player Input</title>
+  <link rel="stylesheet" href="style.css">
   <script src="game.js"></script>
 </head>
 <body>
-<h1>PLAYER INPUT</h1>
-<div id="ui"></div>
+<div class="panel" id="ui"></div>
 
 <script>
 function render() {
@@ -16,17 +16,24 @@ function render() {
 
   if (!s) {
     ui.innerHTML = `
+      <h2>Start Game</h2>
       <input id="count" type="number" placeholder="Players">
-      <label><input type="checkbox" id="disp" checked> Use Display</label>
-      <button onclick="start()">START</button>`;
+      <label>
+        <input type="checkbox" id="disp" checked> Use Display
+      </label><br>
+      <button onclick="start()">INITIALISE</button>`;
+    return;
+  }
+
+  if (!s.adminConfirmed) {
+    ui.innerHTML = `<h2>Waiting for admin to start the game</h2>`;
     return;
   }
 
   if (s.phase === "SETUP") {
     const p = s.players.find(x => !x.name);
     if (!p) {
-      s.phase = "MENU";
-      save(s);
+      ui.innerHTML = `<h2>All players entered</h2>`;
       return;
     }
     ui.innerHTML = `
@@ -35,8 +42,13 @@ function render() {
       <select id="role">
         <option>FAITHFUL</option>
         <option>TRAITOR</option>
-      </select>
+      </select><br>
       <button onclick="savePlayer(${p.id})">CONFIRM</button>`;
+    return;
+  }
+
+  if (s.paused) {
+    ui.innerHTML = `<h2>GAME PAUSED</h2>`;
     return;
   }
 
@@ -44,31 +56,32 @@ function render() {
     ui.innerHTML = `
       <button onclick="startGame()">GAME</button>
       <button onclick="finalBanish()">FINAL BANISHMENT</button>`;
-    return;
   }
 
-  if (s.phase === "MURDER") {
-    const p = alivePlayers().find(x => x.id === s.currentPlayer);
-    if (p.role !== "TRAITOR") return nextMurder();
-
-    ui.innerHTML = `<h2>${p.name}, SELECT A PLAYER</h2>`;
-    faithfulAlive().forEach(t => {
-      ui.innerHTML += `<button onclick="murder(${t.id})">${t.name}</button>`;
+  if (s.phase === "MURDER" && s.currentPlayer) {
+    const me = s.players.find(p => p.id === s.currentPlayer);
+    if (me.role !== "TRAITOR") {
+      nextMurder();
+      return;
+    }
+    ui.innerHTML = `<h2>${me.name}, SELECT A PLAYER</h2>`;
+    aliveFaithful().forEach(p => {
+      ui.innerHTML += `<button onclick="chooseMurder(${p.id})">${p.name}</button>`;
     });
   }
 
-  if (s.phase === "VOTE") {
-    const p = alivePlayers().find(x => x.id === s.currentPlayer);
-    ui.innerHTML = `<h2>${p.name}, VOTE</h2>`;
-    alivePlayers().forEach(t => {
-      ui.innerHTML += `<button onclick="vote('${t.name}')">${t.name}</button>`;
+  if (s.phase === "VOTE" && s.currentPlayer) {
+    const me = s.players.find(p => p.id === s.currentPlayer);
+    ui.innerHTML = `<h2>${me.name}, VOTE</h2>`;
+    alivePlayers().forEach(p => {
+      ui.innerHTML += `<button onclick="vote('${p.name}')">${p.name}</button>`;
     });
   }
 }
 
 function start() {
   initGame(
-    parseInt(document.getElementById("count").value),
+    Number(document.getElementById("count").value),
     document.getElementById("disp").checked
   );
 }
@@ -81,107 +94,8 @@ function savePlayer(id) {
   save(s);
 }
 
-function startGame() {
-  const s = load();
-  const r = Math.floor(Math.random() * 3);
-  if (r === 0) {
-    s.message = "SILENT NIGHT";
-    speak("Silent night. Nothing happens.");
-    save(s);
-  }
-  if (r === 1) startNight();
-  if (r === 2) startBanish(false);
-}
-
-function finalBanish() { startBanish(true); }
-
-function startNight() {
-  const s = load();
-  s.phase = "MURDER";
-  s.nightChoices = [];
-  s.currentPlayer = alivePlayers()[0].id;
-  s.message = "HEADS DOWN";
-  speak("Heads down.");
-  speak(`Player ${s.currentPlayer}, please come to the computer.`);
-  save(s);
-}
-
-function murder(id) {
-  const s = load();
-  s.nightChoices.push(id);
-  nextMurder();
-}
-
-function nextMurder() {
-  const s = load();
-  const alive = alivePlayers();
-  const idx = alive.findIndex(p => p.id === s.currentPlayer);
-  if (idx === alive.length - 1) {
-    const victim = s.nightChoices[Math.floor(Math.random() * s.nightChoices.length)];
-    s.players.find(p => p.id === victim).alive = false;
-    s.message = `THE NIGHT IS OVER. ${s.players.find(p=>p.id===victim).name} WAS MURDERED`;
-    speak(s.message);
-    s.phase = "MENU";
-    save(s);
-    checkWin();
-    return;
-  }
-  s.currentPlayer = alive[idx + 1].id;
-  speak(`Player ${s.currentPlayer}, please come to the computer.`);
-  save(s);
-}
-
-function startBanish(final) {
-  const s = load();
-  s.phase = "DISCUSS";
-  s.final = final;
-  s.message = "YOU HAVE 2 MINUTES TO TALK";
-  speak(s.message);
-  save(s);
-  setTimeout(() => {
-    s.phase = "VOTE";
-    s.votes = {};
-    s.currentPlayer = alivePlayers()[0].id;
-    speak("Heads down.");
-    speak(`Player ${s.currentPlayer}, please come to the computer.`);
-    save(s);
-  }, 120000);
-}
-
-function vote(name) {
-  const s = load();
-  const k = name.toUpperCase();
-  s.votes[k] = (s.votes[k] || 0) + 1;
-  const alive = alivePlayers();
-  const idx = alive.findIndex(p => p.id === s.currentPlayer);
-  if (idx === alive.length - 1) return finishVote();
-  s.currentPlayer = alive[idx + 1].id;
-  speak(`Player ${s.currentPlayer}, please come to the computer.`);
-  save(s);
-}
-
-function finishVote() {
-  const s = load();
-  const max = Math.max(...Object.values(s.votes));
-  const top = Object.entries(s.votes).filter(v => v[1] === max);
-  if (top.length > 1) {
-    s.votes = {};
-    speak("There has been a tie. Please vote again.");
-    s.currentPlayer = alivePlayers()[0].id;
-    save(s);
-    return;
-  }
-  const name = top[0][0];
-  const p = s.players.find(x => x.name.toUpperCase() === name);
-  p.alive = false;
-  speak(`${p.name} has been banished. Please say your role.`);
-  s.phase = "MENU";
-  save(s);
-  checkWin();
-}
-
-window.onstorage = render;
-render();
+setInterval(render, 300);
 </script>
+<script src="logic.js"></script>
 </body>
 </html>
