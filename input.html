@@ -6,6 +6,7 @@
   <script src="game.js"></script>
 </head>
 <body>
+
 <div class="panel" id="ui"></div>
 
 <script>
@@ -17,16 +18,19 @@ function render() {
   if (!s) {
     ui.innerHTML = `
       <h2>Start Game</h2>
-      <input id="count" type="number" placeholder="Players">
+      <input id="count" type="number" placeholder="Number of players">
+      <br><br>
       <label>
         <input type="checkbox" id="disp" checked> Use Display
-      </label><br>
-      <button onclick="start()">INITIALISE</button>`;
+      </label>
+      <br><br>
+      <button onclick="start()">INITIALISE GAME</button>
+    `;
     return;
   }
 
   if (!s.adminConfirmed) {
-    ui.innerHTML = `<h2>Waiting for admin to start the game</h2>`;
+    ui.innerHTML = `<h2>Waiting for admin to start the game…</h2>`;
     return;
   }
 
@@ -36,14 +40,18 @@ function render() {
       ui.innerHTML = `<h2>All players entered</h2>`;
       return;
     }
+
     ui.innerHTML = `
       <h2>PLAYER ${p.id}</h2>
       <input id="name" placeholder="Name">
+      <br>
       <select id="role">
         <option>FAITHFUL</option>
         <option>TRAITOR</option>
-      </select><br>
-      <button onclick="savePlayer(${p.id})">CONFIRM</button>`;
+      </select>
+      <br><br>
+      <button onclick="savePlayer(${p.id})">CONFIRM</button>
+    `;
     return;
   }
 
@@ -55,19 +63,20 @@ function render() {
   if (s.phase === "MENU") {
     ui.innerHTML = `
       <button onclick="startGame()">GAME</button>
-      <button onclick="finalBanish()">FINAL BANISHMENT</button>`;
+      <button onclick="finalBanish()">FINAL BANISHMENT</button>
+    `;
+    return;
   }
 
   if (s.phase === "MURDER" && s.currentPlayer) {
     const me = s.players.find(p => p.id === s.currentPlayer);
-    if (me.role !== "TRAITOR") {
-      nextMurder();
-      return;
-    }
+    if (me.role !== "TRAITOR") return;
+
     ui.innerHTML = `<h2>${me.name}, SELECT A PLAYER</h2>`;
     aliveFaithful().forEach(p => {
       ui.innerHTML += `<button onclick="chooseMurder(${p.id})">${p.name}</button>`;
     });
+    return;
   }
 
   if (s.phase === "VOTE" && s.currentPlayer) {
@@ -79,11 +88,14 @@ function render() {
   }
 }
 
+/* ---------- ACTIONS ---------- */
+
 function start() {
   initGame(
     Number(document.getElementById("count").value),
     document.getElementById("disp").checked
   );
+  render();
 }
 
 function savePlayer(id) {
@@ -92,10 +104,14 @@ function savePlayer(id) {
   p.name = document.getElementById("name").value;
   p.role = document.getElementById("role").value;
   save(s);
+  render();
 }
 
-setInterval(render, 300);
+/* ---------- LISTENERS ---------- */
+
+window.addEventListener("storage", render);
+render();
 </script>
-<script src="logic.js"></script>
+
 </body>
 </html>
