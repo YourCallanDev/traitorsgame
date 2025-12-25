@@ -1,8 +1,48 @@
 <!DOCTYPE html>
 <html>
-<head><script src="game.js"></script></head>
+<head>
+  <title>Traitors – Admin</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="game.js"></script>
+</head>
 <body>
-<h1>ADMIN</h1>
-<button onclick="localStorage.removeItem('TRAITORS_STATE')">RESET</button>
+<div class="panel">
+  <h1>ADMIN PANEL</h1>
+
+  <button onclick="confirmGame()">CONFIRM START</button>
+  <button onclick="pause()">PAUSE / RESUME</button>
+  <button onclick="reset()">RESET GAME</button>
+
+  <h2>Kick Player</h2>
+  <input id="kick" type="number" placeholder="Player ID">
+  <button onclick="kick()">KICK</button>
+</div>
+
+<script>
+function confirmGame() {
+  const s = load();
+  s.adminConfirmed = true;
+  s.phase = "SETUP";
+  save(s);
+}
+
+function pause() {
+  const s = load();
+  s.paused = !s.paused;
+  save(s);
+}
+
+function reset() {
+  localStorage.removeItem("TRAITORS_STATE");
+}
+
+function kick() {
+  const s = load();
+  const id = Number(document.getElementById("kick").value);
+  const p = s.players.find(x => x.id === id);
+  if (p) p.alive = false;
+  save(s);
+}
+</script>
 </body>
 </html>
