@@ -10,24 +10,37 @@
 <div class="panel" id="ui"></div>
 
 <script>
+/* ========= CORE ========= */
+
 function render() {
   const s = load();
   const ui = document.getElementById("ui");
   ui.innerHTML = "";
 
-  if (!s || !s.adminConfirmed || s.paused) {
-    ui.innerHTML = `<img src="traitors.jpg" class="logo">`;
+  if (!s) {
+    ui.innerHTML = `
+      <img src="traitors.jpg" class="logo">
+      <h2>START GAME</h2>
+      <input id="count" type="number" min="3" placeholder="Number of Players">
+      <button onclick="start()">START</button>
+    `;
     return;
   }
 
-  /* PLAYER SETUP */
+  if (s.paused) {
+    ui.innerHTML = `
+      <img src="traitors.jpg" class="logo">
+      <h2>GAME PAUSED</h2>
+    `;
+    return;
+  }
+
+  /* SETUP */
   if (s.phase === "SETUP") {
     const p = s.players.find(pl => !pl.name);
     if (!p) {
       s.phase = "MENU";
-      save(s);
-      render();
-      return;
+      save(s); render(); return;
     }
 
     ui.innerHTML = `
@@ -37,8 +50,7 @@ function render() {
         <option value="FAITHFUL">FAITHFUL</option>
         <option value="TRAITOR">TRAITOR</option>
       </select>
-      <br>
-      <button onclick="confirmPlayer(${p.id})">CONFIRM</button>
+      <button onclick="confirm(${p.id})">CONFIRM</button>
     `;
     return;
   }
@@ -47,20 +59,23 @@ function render() {
   if (s.phase === "MENU") {
     ui.innerHTML = `
       <h2>CHOOSE PHASE</h2>
-      <button onclick="startGame()">GAME</button>
-      <button onclick="startFinalBanish()">FINAL BANISHMENT</button>
+      <button onclick="game()">GAME</button>
+      <button onclick="finalBanish()">FINAL BANISHMENT</button>
     `;
     return;
   }
 
   /* MURDER */
   if (s.phase === "MURDER") {
-    const p = s.players.find(pl => pl.id === s.currentPlayer);
+    const p = s.players.find(pl => pl.id === s.current);
     ui.innerHTML = `<h2>${p.name}</h2>`;
 
     if (p.role !== "TRAITOR") {
-      ui.innerHTML += `<p>YOU ARE FAITHFUL<br>NO ACTION REQUIRED<br>PLEASE RETURN TO YOUR SEAT</p>`;
-      ui.innerHTML += `<button onclick="nextMurder()">CONTINUE</button>`;
+      ui.innerHTML += `
+        <p>YOU ARE FAITHFUL</p>
+        <p>NO ACTION REQUIRED</p>
+        <button onclick="nextMurder()">RETURN TO SEAT</button>
+      `;
       return;
     }
 
@@ -70,24 +85,24 @@ function render() {
       .forEach(pl => {
         const b = document.createElement("button");
         b.textContent = pl.name;
-        b.onclick = () => chooseMurder(pl.id);
+        b.onclick = () => murder(pl.id);
         ui.appendChild(b);
       });
     return;
   }
 
-  /* TALKING */
+  /* TALK */
   if (s.phase === "TALK") {
     ui.innerHTML = `
       <h2>YOU HAVE 2 MINUTES TO TALK</h2>
-      <div id="countdown">${s.timer}</div>
+      <div id="countdown">${formatTime(s.timer)}</div>
     `;
     return;
   }
 
-  /* BANISHMENT */
+  /* BANISH */
   if (s.phase === "BANISH") {
-    const p = s.players.find(pl => pl.id === s.currentPlayer);
+    const p = s.players.find(pl => pl.id === s.current);
     ui.innerHTML = `<h2>${p.name}</h2><p>WHO SHOULD BE BANISHED?</p>`;
 
     s.players.filter(pl => pl.alive).forEach(pl => {
@@ -99,36 +114,43 @@ function render() {
   }
 }
 
-/* === FUNCTIONS === */
+/* ========= LOGIC ========= */
 
-function confirmPlayer(id) {
+function start() {
+  const n = Number(document.getElementById("count").value);
+  if (!n || n < 3) return;
+  initGame(n, true);
+  render();
+}
+
+function confirm(id) {
   const s = load();
-  s.players.find(p => p.id === id).name = document.getElementById("name").value.trim();
-  s.players.find(p => p.id === id).role = document.getElementById("role").value;
+  const p = s.players.find(pl => pl.id === id);
+  p.name = document.getElementById("name").value.trim();
+  p.role = document.getElementById("role").value;
   save(s); render();
 }
 
-function startGame() {
-  const s = load();
-  const roll = Math.floor(Math.random() * 3);
-  if (roll === 0) {
+function game() {
+  const r = Math.floor(Math.random() * 3);
+  if (r === 0) {
     speak("Silent night. Nothing happens.");
     return;
   }
-  if (roll === 1) startMurder();
-  if (roll === 2) startBanish();
+  if (r === 1) startMurder();
+  if (r === 2) startBanish();
 }
 
 function startMurder() {
   const s = load();
   s.phase = "MURDER";
   s.murderChoices = [];
-  s.currentPlayer = s.players.find(p => p.alive).id;
+  s.current = s.players.find(p => p.alive).id;
   speak("Heads down.");
   save(s); render();
 }
 
-function chooseMurder(id) {
+function murder(id) {
   const s = load();
   s.murderChoices.push(id);
   nextMurder();
@@ -137,9 +159,9 @@ function chooseMurder(id) {
 function nextMurder() {
   const s = load();
   const alive = s.players.filter(p => p.alive);
-  const idx = alive.findIndex(p => p.id === s.currentPlayer);
-  if (idx + 1 >= alive.length) return resolveMurder();
-  s.currentPlayer = alive[idx + 1].id;
+  const i = alive.findIndex(p => p.id === s.current);
+  if (i + 1 >= alive.length) return resolveMurder();
+  s.current = alive[i + 1].id;
   save(s); render();
 }
 
@@ -159,17 +181,19 @@ function startBanish() {
   s.phase = "TALK";
   s.timer = 120;
   save(s);
-  const interval = setInterval(() => {
+
+  const t = setInterval(() => {
     const st = load();
     st.timer--;
     save(st);
-    if (st.timer <= 0) {
-      clearInterval(interval);
-      st.phase = "BANISH";
-      st.currentPlayer = st.players.find(p => p.alive).id;
-      save(st);
-    }
     render();
+    if (st.timer <= 0) {
+      clearInterval(t);
+      st.phase = "BANISH";
+      st.current = st.players.find(p => p.alive).id;
+      save(st);
+      render();
+    }
   }, 1000);
 }
 
@@ -177,10 +201,11 @@ function vote(name) {
   const s = load();
   s.votes = s.votes || {};
   s.votes[name] = (s.votes[name] || 0) + 1;
+
   const alive = s.players.filter(p => p.alive);
-  const idx = alive.findIndex(p => p.id === s.currentPlayer);
-  if (idx + 1 >= alive.length) return resolveVote();
-  s.currentPlayer = alive[idx + 1].id;
+  const i = alive.findIndex(p => p.id === s.current);
+  if (i + 1 >= alive.length) return resolveVote();
+  s.current = alive[i + 1].id;
   save(s); render();
 }
 
@@ -191,13 +216,23 @@ function resolveVote() {
   const top = entries.filter(e => e[1] === max);
   if (top.length > 1) {
     s.votes = {};
-    s.currentPlayer = s.players.find(p => p.alive).id;
+    s.current = s.players.find(p => p.alive).id;
     save(s); render();
     return;
   }
   s.players.find(p => p.name.toUpperCase() === top[0][0]).alive = false;
   s.phase = "MENU";
   save(s); render();
+}
+
+function finalBanish() {
+  startBanish();
+}
+
+function formatTime(t) {
+  const m = Math.floor(t / 60);
+  const s = t % 60;
+  return `${m}:${s.toString().padStart(2,"0")}`;
 }
 
 window.addEventListener("storage", render);
