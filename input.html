@@ -52,7 +52,8 @@ function startGame() {
     murderVotes: [],
     selected: null,
     votes: {},
-    timer: 0
+    timer: 0,
+    lastRoundType: null
   });
   render();
 }
@@ -199,13 +200,28 @@ function confirmSetup() {
 /* ================= GAME ================= */
 
 function randomGame() {
-  const r = Math.floor(Math.random() * 3);
+  const s = load();
+  
+  // Create options array, excluding banishment if it was the last round
+  let options = [0, 1, 2]; // 0=nothing, 1=murder, 2=banish
+  if (s.lastRoundType === 'BANISH') {
+    options = [0, 1]; // Exclude banishment if it was last round
+  }
+  
+  const r = options[Math.floor(Math.random() * options.length)];
+  
   if (r === 0) {
     speak("Silent night. Nothing happens.");
+    s.lastRoundType = 'NOTHING';
+    save(s);
     return;
   }
-  if (r === 1) startMurder();
-  if (r === 2) startBanish();
+  if (r === 1) {
+    startMurder();
+  }
+  if (r === 2) {
+    startBanish();
+  }
 }
 
 function startMurder() {
@@ -214,6 +230,7 @@ function startMurder() {
   s.index = 0;
   s.murderVotes = [];
   s.selected = null;
+  s.lastRoundType = 'MURDER'; // Track that murder was used
   speak("Heads down.");
   save(s);
   render();
@@ -275,6 +292,7 @@ function startBanish() {
   s.phase = "TALK";
   s.timer = 120;
   s.votes = {};
+  s.lastRoundType = 'BANISH'; // Track that banishment was used
   save(s);
   render();
 

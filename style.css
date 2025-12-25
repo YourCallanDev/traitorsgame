@@ -29,6 +29,14 @@ html, body {
   padding: 40px;
 }
 
+.center {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
 .logo {
   max-width: 360px;
   margin-bottom: 30px;
@@ -73,6 +81,12 @@ button {
 
 button:hover {
   background: var(--gold-dark);
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 #countdown {
