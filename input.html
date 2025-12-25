@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Player Input</title>
+  <script src="game.js"></script>
+</head>
+<body>
+<h1>PLAYER INPUT</h1>
+
+<div id="content"></div>
+
+<script>
+function render() {
+  const state = getState();
+  const div = document.getElementById("content");
+  div.innerHTML = "";
+
+  if (!state) {
+    div.innerHTML = `
+      <input id="pc" type="number" placeholder="Number of players">
+      <button onclick="init()">START</button>`;
+    return;
+  }
+
+  if (state.phase === "SETUP") {
+    state.players.forEach(p => {
+      if (!p.name) {
+        div.innerHTML = `
+          <h2>PLAYER ${p.id}</h2>
+          <input id="name" placeholder="Name">
+          <select id="role">
+            <option>FAITHFUL</option>
+            <option>TRAITOR</option>
+          </select>
+          <button onclick="savePlayer(${p.id})">CONFIRM</button>`;
+      }
+    });
+    return;
+  }
+
+  if (state.phase === "MURDER_CHOICE") {
+    const p = state.currentPlayer;
+    const me = state.players.find(x => x.id === p);
+    if (me.role !== "TRAITOR") {
+      nextNight();
+      return;
+    }
+
+    const targets = alivePlayers().filter(x => x.role !== "TRAITOR");
+    div.innerHTML = `<h2>${me.name} – SELECT A PLAYER</h2>`;
+    targets.forEach(t => {
+      div.innerHTML += `<button onclick="chooseMurder(${p}, ${t.id})">${t.name}</button>`;
+    });
+  }
+
+  if (state.phase === "VOTING") {
+    const p = state.currentPlayer;
+    const me = state.players.find(x => x.id === p);
+    const targets = alivePlayers();
+    div.innerHTML = `<h2>${me.name} – WHO DO YOU BANISH?</h2>`;
+    targets.forEach(t => {
+      div.innerHTML += `<button onclick="vote('${t.name.toUpperCase()}')">${t.name}</button>`;
+    });
+  }
+}
+
+function init() {
+  initGame(parseInt(document.getElementById("pc").value));
+}
+
+function savePlayer(id) {
+  const s = getState();
+  const p = s.players.find(x => x.id === id);
+  p.name = document.getElementById("name").value;
+  p.role = document.getElementById("role").value;
+  setState(s);
+}
+
+function chooseMurder(traitorId, targetId) {
+  const s = getState();
+  s.nightChoices.push(targetId);
+  nextNight();
+}
+
+function vote(name) {
+  const s = getState();
+  s.votes[name] = (s.votes[name] || 0) + 1;
+  nextVote();
+}
+
+window.onstorage = render;
+render();
+</script>
+</body>
+</html>
