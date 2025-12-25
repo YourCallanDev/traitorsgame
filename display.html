@@ -4,83 +4,17 @@
   <title>Display</title>
   <script src="game.js"></script>
   <style>
-    body { background:black; color:white; font-size:40px; text-align:center; }
+    body { background:black;color:white;font-size:48px;text-align:center;padding:50px }
   </style>
 </head>
 <body>
 <div id="screen"></div>
-
 <script>
-let timer = null;
-
 function render() {
-  const s = getState();
+  const s = load();
   if (!s) return;
-
   document.getElementById("screen").innerText = s.message || "";
 }
-
-function startGamePhase() {
-  const s = getState();
-  const roll = Math.floor(Math.random() * 3);
-
-  if (roll === 0) {
-    s.message = "SILENT NIGHT";
-    speak("Silent night. Nothing happens.");
-    setState(s);
-    return;
-  }
-
-  if (roll === 1) startNight();
-  if (roll === 2) startBanishment(false);
-}
-
-function startNight() {
-  const s = getState();
-  s.phase = "MURDER_CHOICE";
-  s.nightChoices = [];
-  s.currentPlayer = alivePlayers()[0].id;
-  s.message = "HEADS DOWN";
-  speak("Heads down.");
-  setState(s);
-}
-
-function nextNight() {
-  const s = getState();
-  const alive = alivePlayers().map(p => p.id);
-  const idx = alive.indexOf(s.currentPlayer) + 1;
-
-  if (idx >= alive.length) {
-    const victim = s.nightChoices[Math.floor(Math.random() * s.nightChoices.length)];
-    const p = s.players.find(x => x.id === victim);
-    p.alive = false;
-    s.message = `PLAYER ${p.name} WAS MURDERED`;
-    speak(`Players, the night is over. ${p.name} was murdered.`);
-    s.phase = "GAME_MENU";
-  } else {
-    s.currentPlayer = alive[idx];
-    speak(`Player ${s.currentPlayer}, please come to the computer.`);
-  }
-  setState(s);
-}
-
-function startBanishment(final) {
-  const s = getState();
-  s.phase = "VOTING";
-  s.votes = {};
-  s.final = final;
-  s.message = "YOU HAVE 2 MINUTES TO TALK";
-  speak("You have two minutes to talk.");
-  setState(s);
-
-  setTimeout(() => {
-    s.message = "HEADS DOWN";
-    speak("Heads down.");
-    s.currentPlayer = alivePlayers()[0].id;
-    setState(s);
-  }, 120000);
-}
-
 window.onstorage = render;
 render();
 </script>
