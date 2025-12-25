@@ -17,29 +17,23 @@ function render() {
 
   if (!s) {
     ui.innerHTML = `
-      <h2>Start Game</h2>
+      <h2>Initialise Game</h2>
       <input id="count" type="number" placeholder="Number of players">
       <br><br>
-      <label>
-        <input type="checkbox" id="disp" checked> Use Display
-      </label>
+      <label><input type="checkbox" id="disp" checked> Use Display</label>
       <br><br>
-      <button onclick="start()">INITIALISE GAME</button>
-    `;
+      <button onclick="start()">START</button>`;
     return;
   }
 
   if (!s.adminConfirmed) {
-    ui.innerHTML = `<h2>Waiting for admin to start the game…</h2>`;
+    ui.innerHTML = `<h2>Waiting for admin to confirm game start…</h2>`;
     return;
   }
 
   if (s.phase === "SETUP") {
     const p = s.players.find(x => !x.name);
-    if (!p) {
-      ui.innerHTML = `<h2>All players entered</h2>`;
-      return;
-    }
+    if (!p) return;
 
     ui.innerHTML = `
       <h2>PLAYER ${p.id}</h2>
@@ -50,8 +44,7 @@ function render() {
         <option>TRAITOR</option>
       </select>
       <br><br>
-      <button onclick="savePlayer(${p.id})">CONFIRM</button>
-    `;
+      <button onclick="savePlayer(${p.id})">CONFIRM</button>`;
     return;
   }
 
@@ -62,33 +55,12 @@ function render() {
 
   if (s.phase === "MENU") {
     ui.innerHTML = `
+      <h2>Choose Next Phase</h2>
       <button onclick="startGame()">GAME</button>
-      <button onclick="finalBanish()">FINAL BANISHMENT</button>
-    `;
+      <button onclick="finalBanish()">FINAL BANISHMENT</button>`;
     return;
-  }
-
-  if (s.phase === "MURDER" && s.currentPlayer) {
-    const me = s.players.find(p => p.id === s.currentPlayer);
-    if (me.role !== "TRAITOR") return;
-
-    ui.innerHTML = `<h2>${me.name}, SELECT A PLAYER</h2>`;
-    aliveFaithful().forEach(p => {
-      ui.innerHTML += `<button onclick="chooseMurder(${p.id})">${p.name}</button>`;
-    });
-    return;
-  }
-
-  if (s.phase === "VOTE" && s.currentPlayer) {
-    const me = s.players.find(p => p.id === s.currentPlayer);
-    ui.innerHTML = `<h2>${me.name}, VOTE</h2>`;
-    alivePlayers().forEach(p => {
-      ui.innerHTML += `<button onclick="vote('${p.name}')">${p.name}</button>`;
-    });
   }
 }
-
-/* ---------- ACTIONS ---------- */
 
 function start() {
   initGame(
@@ -101,13 +73,19 @@ function start() {
 function savePlayer(id) {
   const s = load();
   const p = s.players.find(x => x.id === id);
-  p.name = document.getElementById("name").value;
+
+  p.name = document.getElementById("name").value.trim();
   p.role = document.getElementById("role").value;
+
+  if (s.players.every(pl => pl.name && pl.role)) {
+    s.phase = "MENU";
+    s.message = "CHOOSE THE NEXT PHASE";
+    speak("Players, please choose the next phase.");
+  }
+
   save(s);
   render();
 }
-
-/* ---------- LISTENERS ---------- */
 
 window.addEventListener("storage", render);
 render();
