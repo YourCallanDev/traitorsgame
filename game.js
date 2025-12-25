@@ -1,29 +1,35 @@
 const KEY = "TRAITORS_STATE";
 
-function save(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
-function load() { return JSON.parse(localStorage.getItem(KEY)); }
+function save(s) {
+  localStorage.setItem(KEY, JSON.stringify(s));
+}
+function load() {
+  return JSON.parse(localStorage.getItem(KEY));
+}
 
 function speak(text) {
-  if (!load()?.useDisplay) return;
-  const u = new SpeechSynthesisUtterance(text);
+  const s = load();
+  if (!s || !s.useDisplay || s.paused) return;
   speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  speechSynthesis.speak(new SpeechSynthesisUtterance(text));
 }
 
 function initGame(playerCount, useDisplay) {
   save({
     useDisplay,
+    paused: false,
+    adminConfirmed: false,
     phase: "SETUP",
+    message: "",
     players: Array.from({ length: playerCount }, (_, i) => ({
       id: i + 1,
       name: "",
       role: "",
       alive: true
     })),
-    currentIndex: 0,
+    currentPlayer: null,
     nightChoices: [],
     votes: {},
-    message: "",
     final: false
   });
 }
@@ -34,7 +40,7 @@ function alivePlayers() {
 function aliveTraitors() {
   return alivePlayers().filter(p => p.role === "TRAITOR");
 }
-function faithfulAlive() {
+function aliveFaithful() {
   return alivePlayers().filter(p => p.role === "FAITHFUL");
 }
 
@@ -47,7 +53,7 @@ function checkWin() {
     save(s);
     return true;
   }
-  if (aliveTraitors().length >= faithfulAlive().length) {
+  if (aliveTraitors().length >= aliveFaithful().length) {
     s.phase = "END";
     s.message = "TRAITORS HAVE WON THE GAME";
     speak(s.message);
@@ -55,9 +61,4 @@ function checkWin() {
     return true;
   }
   return false;
-}
-
-function nextAliveIndex(idx) {
-  const alive = alivePlayers();
-  return alive[idx + 1]?.id ?? null;
 }
