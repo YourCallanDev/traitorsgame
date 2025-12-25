@@ -6,6 +6,7 @@
   <script src="game.js"></script>
 </head>
 <body>
+
 <img src="traitors.jpg" class="logo" id="logo">
 <h1 id="text"></h1>
 
@@ -31,7 +32,9 @@ function render() {
   text.innerText = s.message;
 }
 
-setInterval(render, 300);
+window.addEventListener("storage", render);
+render();
 </script>
+
 </body>
 </html>
