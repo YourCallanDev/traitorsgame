@@ -1,36 +1,24 @@
-/* =========================
-   THE TRAITORS – CORE STYLE
-   SAFE • STABLE • BRANDED
-========================= */
-
 :root {
-  --bg-main: #6b002b;        /* deep burgundy */
-  --bg-dark: #3b0018;
-  --gold: #f2a100;           /* logo gold */
+  --burgundy: #6b002b;
+  --burgundy-dark: #3a0017;
+  --gold: #f2a100;
   --gold-dark: #c27d00;
-  --text-main: #ffffff;
-  --text-muted: #d0b0bb;
+  --white: #ffffff;
+  --muted: #d7b6c2;
 }
 
-/* =========================
-   GLOBAL RESET
-========================= */
 * {
   box-sizing: border-box;
 }
 
 html, body {
   margin: 0;
-  padding: 0;
   height: 100%;
-  background: var(--bg-main);
-  color: var(--text-main);
+  background: var(--burgundy);
+  color: var(--white);
   font-family: Georgia, "Times New Roman", serif;
 }
 
-/* =========================
-   MAIN PANEL
-========================= */
 .panel {
   min-height: 100vh;
   display: flex;
@@ -41,130 +29,58 @@ html, body {
   padding: 40px;
 }
 
-/* =========================
-   LOGO
-========================= */
 .logo {
-  max-width: 340px;
+  max-width: 360px;
   margin-bottom: 30px;
 }
 
-/* =========================
-   HEADINGS
-========================= */
 h1 {
-  font-size: 60px;
+  font-size: 56px;
   letter-spacing: 4px;
-  margin: 20px 0;
 }
 
 h2 {
   font-size: 36px;
   letter-spacing: 2px;
-  margin: 16px 0;
 }
 
-h3 {
-  font-size: 26px;
-  margin: 10px 0;
-}
-
-/* =========================
-   TEXT
-========================= */
 p {
-  font-size: 20px;
-  margin: 10px 0;
+  font-size: 22px;
+  max-width: 800px;
 }
 
-/* =========================
-   INPUTS (CRITICAL: STABLE)
-========================= */
 input, select {
-  font-size: 18px;
-  padding: 10px 14px;
+  font-size: 20px;
+  padding: 10px;
   margin: 8px;
-  border-radius: 6px;
-  border: none;
-  outline: none;
-  background: #ffffff;
-  color: #000000;
   width: 260px;
   text-align: center;
-}
-
-/* DO NOT animate inputs */
-input:focus, select:focus {
-  outline: 3px solid var(--gold);
-}
-
-/* =========================
-   BUTTONS
-========================= */
-button {
-  font-size: 18px;
-  padding: 12px 26px;
-  margin: 10px;
   border-radius: 6px;
   border: none;
-  cursor: pointer;
+}
+
+button {
+  font-size: 20px;
+  padding: 12px 28px;
+  margin: 10px;
   background: var(--gold);
-  color: #000;
+  color: black;
+  border: none;
+  border-radius: 6px;
   font-weight: bold;
+  cursor: pointer;
 }
 
 button:hover {
   background: var(--gold-dark);
 }
 
-button:active {
-  transform: scale(0.98);
-}
-
-/* =========================
-   DISPLAY MESSAGE
-========================= */
-#message {
-  font-size: 52px;
-  line-height: 1.2;
-  margin: 30px;
-}
-
-/* =========================
-   PLAYER LIST (DISPLAY)
-========================= */
-#players {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 30px;
-}
-
-.player {
-  background: rgba(255,255,255,0.15);
-  padding: 10px 18px;
-  border-radius: 6px;
-  font-size: 20px;
+#countdown {
+  font-size: 64px;
+  margin-top: 20px;
 }
 
 .player.dead {
   opacity: 0.4;
   text-decoration: line-through;
-}
-
-/* =========================
-   PAUSED STATE
-========================= */
-.paused {
-  opacity: 0.6;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 768px) {
-  h1 { font-size: 40px; }
-  h2 { font-size: 28px; }
-  #message { font-size: 34px; }
 }
