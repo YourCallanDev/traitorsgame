@@ -1,49 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Traitors – Admin</title>
+  <title>The Traitors – Admin</title>
   <link rel="stylesheet" href="style.css">
-  <script src="game.js"></script>
 </head>
-<body>
+<body class="center">
 
-<div class="panel">
-  <h1>ADMIN PANEL</h1>
-
-  <button onclick="confirmGame()">CONFIRM GAME START</button>
-  <button onclick="pause()">PAUSE / RESUME</button>
-  <button onclick="reset()">RESET GAME</button>
-
-  <h2>Kick Player</h2>
-  <input id="kick" type="number" placeholder="Player ID">
-  <button onclick="kick()">KICK</button>
-</div>
+<div class="panel" id="admin"></div>
 
 <script>
-function confirmGame() {
+function load() {
+  return JSON.parse(localStorage.getItem("gameState"));
+}
+function save(s) {
+  localStorage.setItem("gameState", JSON.stringify(s));
+}
+
+function render() {
+  const a = document.getElementById("admin");
   const s = load();
-  s.adminConfirmed = true;
-  s.phase = "SETUP";
-  save(s);
+  a.innerHTML = "<h2>ADMIN PANEL</h2>";
+
+  if (!s) {
+    a.innerHTML += "<p>No active game</p>";
+    return;
+  }
+
+  a.innerHTML += `
+    <button onclick="pause()">PAUSE</button>
+    <button onclick="resume()">RESUME</button>
+    <button onclick="reset()">RESET GAME</button>
+    <h3>PLAYERS</h3>
+  `;
+
+  s.players.forEach(p => {
+    const b = document.createElement("button");
+    b.textContent = `${p.name || "Player " + p.id} (${p.alive ? "ALIVE" : "DEAD"})`;
+    b.onclick = () => kill(p.id);
+    a.appendChild(b);
+  });
 }
 
 function pause() {
   const s = load();
-  s.paused = !s.paused;
+  s.phase = "PAUSED";
   save(s);
 }
-
-function reset() {
-  localStorage.removeItem("TRAITORS_STATE");
-}
-
-function kick() {
+function resume() {
   const s = load();
-  const id = Number(document.getElementById("kick").value);
-  const p = s.players.find(x => x.id === id);
-  if (p) p.alive = false;
+  s.phase = "MENU";
   save(s);
 }
+function reset() {
+  localStorage.removeItem("gameState");
+}
+function kill(id) {
+  const s = load();
+  const p = s.players.find(p => p.id === id);
+  p.alive = false;
+  save(s);
+}
+
+window.addEventListener("storage", render);
+render();
 </script>
 
 </body>
