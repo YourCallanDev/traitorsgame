@@ -1,4 +1,4 @@
-const KEY = "TRAITORS_STATE";
+const KEY = "gameState";
 
 function save(s) {
   localStorage.setItem(KEY, JSON.stringify(s));
